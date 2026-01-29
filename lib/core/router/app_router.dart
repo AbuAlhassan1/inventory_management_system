@@ -2,6 +2,7 @@ import 'package:go_router/go_router.dart';
 import '../../screens/dashboard_screen.dart';
 import '../../screens/inventory_screen.dart';
 import '../../screens/inventory_history_screen.dart';
+import '../../screens/product_detail_screen.dart';
 import '../../screens/pos_screen.dart';
 import '../../screens/sales_history_screen.dart';
 import '../../screens/debts_screen.dart';
@@ -30,6 +31,14 @@ final appRouter = GoRouter(
           path: '/inventory/history',
           name: 'inventoryHistory',
           builder: (context, state) => const InventoryHistoryScreen(),
+        ),
+        GoRoute(
+          path: '/inventory/product/:id',
+          name: 'productDetail',
+          builder: (context, state) {
+            final id = int.parse(state.pathParameters['id']!);
+            return ProductDetailScreen(productId: id);
+          },
         ),
         GoRoute(
           path: '/pos',

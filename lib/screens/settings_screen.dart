@@ -1,5 +1,3 @@
-// ignore_for_file: deprecated_member_use
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../core/bloc/category/category_bloc.dart';
@@ -9,6 +7,9 @@ import '../core/repositories/category_repository.dart';
 import '../core/repositories/exchange_rate_repository.dart';
 import '../core/database/database.dart';
 import '../widgets/category_form_dialog.dart';
+import '../core/theme/app_theme.dart';
+import '../widgets/ui_components/app_button.dart';
+import '../widgets/ui_components/app_header.dart';
 import 'package:intl/intl.dart';
 
 class SettingsScreen extends StatelessWidget {
@@ -20,34 +21,42 @@ class SettingsScreen extends StatelessWidget {
       length: 2,
       child: Column(
         children: [
+          // Header
+          AppHeader(
+            title: 'الإعدادات',
+            subtitle: 'إدارة الفئات وإعدادات النظام',
+            breadcrumbs: const ['الرئيسية', 'الإعدادات'],
+          ),
+          
+          // Tab Bar
           Container(
-            padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
+              color: AppTheme.darkSurface,
               border: Border(
                 bottom: BorderSide(
-                  color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
+                  color: AppTheme.darkSurfaceVariant,
                   width: 1,
                 ),
               ),
             ),
-            child: Row(
-              children: [
-                Text(
-                  'الإعدادات',
-                  style: Theme.of(context).textTheme.headlineSmall,
+            child: TabBar(
+              labelColor: AppTheme.primaryTeal,
+              unselectedLabelColor: AppTheme.textSecondary,
+              indicatorColor: AppTheme.primaryTeal,
+              tabs: const [
+                Tab(
+                  icon: Icon(Icons.category_outlined),
+                  text: 'الفئات',
                 ),
-                const Spacer(),
-                Expanded(
-                  child: const TabBar(
-                    tabs: [
-                      Tab(text: 'الفئات'),
-                      Tab(text: 'سعر الصرف'),
-                    ],
-                  ),
+                Tab(
+                  icon: Icon(Icons.currency_exchange_outlined),
+                  text: 'سعر الصرف',
                 ),
               ],
             ),
           ),
+          
+          // Tab Content
           const Expanded(
             child: TabBarView(
               children: [
@@ -106,9 +115,10 @@ class _CategoriesViewState extends State<_CategoriesView> {
         Container(
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
+            color: AppTheme.darkSurface,
             border: Border(
               bottom: BorderSide(
-                color: theme.colorScheme.outline.withOpacity(0.2),
+                color: AppTheme.darkSurfaceVariant,
                 width: 1,
               ),
             ),
@@ -116,14 +126,17 @@ class _CategoriesViewState extends State<_CategoriesView> {
           child: Row(
             children: [
               SizedBox(
-                width: 300,
+                width: 400,
                 child: TextField(
                   controller: _searchController,
                   decoration: InputDecoration(
                     hintText: 'بحث عن فئة...',
                     prefixIcon: const Icon(Icons.search, size: 20),
+                    filled: true,
+                    fillColor: AppTheme.darkSurfaceVariant,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide.none,
                     ),
                     contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   ),
@@ -134,8 +147,11 @@ class _CategoriesViewState extends State<_CategoriesView> {
                   },
                 ),
               ),
-              const SizedBox(width: 12),
-              ElevatedButton.icon(
+              const Spacer(),
+              AppButton(
+                label: 'إضافة فئة',
+                type: ButtonType.primary,
+                icon: Icons.add,
                 onPressed: () async {
                   final categoryBloc = context.read<CategoryBloc>();
                   categoryBloc.add(const SelectCategory(null));
@@ -147,11 +163,6 @@ class _CategoriesViewState extends State<_CategoriesView> {
                     ),
                   );
                 },
-                icon: const Icon(Icons.add, size: 18),
-                label: const Text('إضافة فئة'),
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                ),
               ),
             ],
           ),
@@ -202,7 +213,7 @@ class _CategoriesViewState extends State<_CategoriesView> {
                         Icon(
                           Icons.category_outlined,
                           size: 64,
-                          color: theme.colorScheme.onSurface.withOpacity(0.3),
+                          color: AppTheme.textTertiary,
                         ),
                         const SizedBox(height: 16),
                         Text(
@@ -213,7 +224,7 @@ class _CategoriesViewState extends State<_CategoriesView> {
                         Text(
                           'اضغط على زر الإضافة لإضافة فئة جديدة',
                           style: theme.textTheme.bodyMedium?.copyWith(
-                            color: theme.colorScheme.onSurface.withOpacity(0.6),
+                            color: AppTheme.textSecondary,
                           ),
                         ),
                       ],
@@ -221,76 +232,121 @@ class _CategoriesViewState extends State<_CategoriesView> {
                   );
                 }
 
-                return ListView.builder(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: categories.length,
-                  itemBuilder: (context, index) {
-                    final category = categories[index];
-                    return Card(
-                      margin: const EdgeInsets.only(bottom: 8),
-                      child: ListTile(
-                        title: Text(
-                          isRTL ? category.nameAr : category.nameEn,
-                          style: const TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                        subtitle: category.description != null
-                            ? Text(category.description!)
-                            : null,
-                        trailing: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            IconButton(
-                              icon: const Icon(Icons.edit, size: 18),
-                              onPressed: () async {
-                                context.read<CategoryBloc>().add(SelectCategory(category));
-                                await showDialog(
-                                  context: context,
-                                  builder: (context) => BlocProvider.value(
-                                    value: context.read<CategoryBloc>(),
-                                    child: const CategoryFormDialog(),
-                                  ),
-                                );
-                              },
-                            ),
-                            IconButton(
-                              icon: Icon(
-                                Icons.delete,
-                                size: 18,
-                                color: theme.colorScheme.error,
-                              ),
-                              onPressed: () async {
-                                final confirmed = await showDialog<bool>(
-                                  context: context,
-                                  builder: (context) => AlertDialog(
-                                    title: const Text('تأكيد الحذف'),
-                                    content: Text(
-                                        'هل أنت متأكد من حذف "${isRTL ? category.nameAr : category.nameEn}"؟'),
-                                    actions: [
-                                      TextButton(
-                                        onPressed: () => Navigator.of(context).pop(false),
-                                        child: const Text('إلغاء'),
-                                      ),
-                                      TextButton(
-                                        onPressed: () => Navigator.of(context).pop(true),
-                                        style: TextButton.styleFrom(
-                                          foregroundColor: theme.colorScheme.error,
-                                        ),
-                                        child: const Text('حذف'),
-                                      ),
-                                    ],
-                                  ),
-                                );
-
-                                if (confirmed == true && context.mounted) {
-                                  context.read<CategoryBloc>().add(DeleteCategory(category.id));
-                                }
-                              },
-                            ),
-                          ],
-                        ),
+                return SingleChildScrollView(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'الفئات (${categories.length})',
+                        style: theme.textTheme.titleLarge,
                       ),
-                    );
-                  },
+                      const SizedBox(height: 16),
+                      ...categories.map((category) {
+                        return Card(
+                          margin: const EdgeInsets.only(bottom: 12),
+                          child: ListTile(
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 20,
+                              vertical: 12,
+                            ),
+                            leading: Container(
+                              width: 48,
+                              height: 48,
+                              decoration: BoxDecoration(
+                                color: AppTheme.primaryTeal.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Icon(
+                                Icons.category,
+                                color: AppTheme.primaryTeal,
+                              ),
+                            ),
+                            title: Text(
+                              isRTL ? category.nameAr : category.nameEn,
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            subtitle: category.description != null
+                                ? Padding(
+                                    padding: const EdgeInsets.only(top: 4),
+                                    child: Text(
+                                      category.description!,
+                                      style: theme.textTheme.bodySmall?.copyWith(
+                                        color: AppTheme.textSecondary,
+                                      ),
+                                    ),
+                                  )
+                                : null,
+                            trailing: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                IconButton(
+                                  icon: Icon(
+                                    Icons.edit_outlined,
+                                    size: 20,
+                                    color: AppTheme.textSecondary,
+                                  ),
+                                  onPressed: () async {
+                                    context.read<CategoryBloc>().add(SelectCategory(category));
+                                    await showDialog(
+                                      context: context,
+                                      builder: (context) => BlocProvider.value(
+                                        value: context.read<CategoryBloc>(),
+                                        child: const CategoryFormDialog(),
+                                      ),
+                                    );
+                                  },
+                                ),
+                                IconButton(
+                                  icon: Icon(
+                                    Icons.delete_outline,
+                                    size: 20,
+                                    color: AppTheme.errorRed,
+                                  ),
+                                  onPressed: () async {
+                                    final confirmed = await showDialog<bool>(
+                                      context: context,
+                                      builder: (context) => AlertDialog(
+                                        backgroundColor: AppTheme.darkSurface,
+                                        title: Text(
+                                          'تأكيد الحذف',
+                                          style: theme.textTheme.titleLarge,
+                                        ),
+                                        content: Text(
+                                          'هل أنت متأكد من حذف "${isRTL ? category.nameAr : category.nameEn}"؟',
+                                          style: theme.textTheme.bodyMedium,
+                                        ),
+                                        actions: [
+                                          TextButton(
+                                            onPressed: () => Navigator.of(context).pop(false),
+                                            child: Text(
+                                              'إلغاء',
+                                              style: TextStyle(color: AppTheme.textSecondary),
+                                            ),
+                                          ),
+                                          AppButton(
+                                            label: 'حذف',
+                                            type: ButtonType.primary,
+                                            onPressed: () => Navigator.of(context).pop(true),
+                                          ),
+                                        ],
+                                      ),
+                                    );
+
+                                    if (confirmed == true && context.mounted) {
+                                      context.read<CategoryBloc>().add(DeleteCategory(category.id));
+                                    }
+                                  },
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ],
+                  ),
                 );
               }
 
@@ -354,9 +410,10 @@ class _ExchangeRateTabState extends State<_ExchangeRateTab> {
       
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('تم حفظ سعر الصرف بنجاح'),
-            backgroundColor: Colors.green,
+          SnackBar(
+            content: const Text('تم حفظ سعر الصرف بنجاح'),
+            backgroundColor: AppTheme.successGreen,
+            behavior: SnackBarBehavior.floating,
           ),
         );
       }
@@ -365,7 +422,8 @@ class _ExchangeRateTabState extends State<_ExchangeRateTab> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('حدث خطأ: $e'),
-            backgroundColor: Theme.of(context).colorScheme.error,
+            backgroundColor: AppTheme.errorRed,
+            behavior: SnackBarBehavior.floating,
           ),
         );
       }
@@ -381,100 +439,202 @@ class _ExchangeRateTabState extends State<_ExchangeRateTab> {
     final theme = Theme.of(context);
     final currencyFormat = NumberFormat.currency(symbol: 'د.ع', decimalDigits: 0);
 
-    return Padding(
+    return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'سعر الصرف الحالي',
-            style: theme.textTheme.titleLarge,
+            'سعر الصرف',
+            style: theme.textTheme.headlineMedium,
           ),
           const SizedBox(height: 8),
-          if (_currentRate != null)
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          '1 USD = ${currencyFormat.format(_currentRate!.rateUsdToIqd)}',
-                          style: theme.textTheme.headlineSmall,
+          Text(
+            'إدارة سعر صرف الدولار الأمريكي إلى الدينار العراقي',
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: AppTheme.textSecondary,
+            ),
+          ),
+          const SizedBox(height: 32),
+
+          // Current Rate Card
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: AppTheme.primaryTeal.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8),
                         ),
+                        child: Icon(
+                          Icons.currency_exchange,
+                          color: AppTheme.primaryTeal,
+                          size: 24,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Text(
+                        'سعر الصرف الحالي',
+                        style: theme.textTheme.titleLarge,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  if (_currentRate != null) ...[
+                    Text(
+                      '1 USD = ${currencyFormat.format(_currentRate!.rateUsdToIqd)}',
+                      style: theme.textTheme.headlineMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.primaryTeal,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.info_outline,
+                          size: 16,
+                          color: AppTheme.textSecondary,
+                        ),
+                        const SizedBox(width: 8),
                         if (_currentRate!.source != null)
                           Text(
                             'المصدر: ${_currentRate!.source}',
-                            style: theme.textTheme.bodySmall,
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: AppTheme.textSecondary,
+                            ),
                           ),
+                        if (_currentRate!.source != null) const SizedBox(width: 16),
+                        Icon(
+                          Icons.access_time,
+                          size: 16,
+                          color: AppTheme.textSecondary,
+                        ),
+                        const SizedBox(width: 8),
                         Text(
-                          'آخر تحديث: ${DateFormat('yyyy-MM-dd HH:mm').format(_currentRate!.lastUpdated)}',
-                          style: theme.textTheme.bodySmall,
+                          'آخر تحديث: ${DateFormat('yyyy-MM-dd HH:mm', 'ar').format(_currentRate!.lastUpdated)}',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: AppTheme.textSecondary,
+                          ),
                         ),
                       ],
                     ),
-                  ],
-                ),
-              ),
-            )
-          else
-            const Card(
-              child: Padding(
-                padding: EdgeInsets.all(16),
-                child: Text('لا يوجد سعر صرف محدد'),
+                  ] else
+                    Text(
+                      'لا يوجد سعر صرف محدد',
+                      style: theme.textTheme.bodyLarge?.copyWith(
+                        color: AppTheme.textSecondary,
+                      ),
+                    ),
+                ],
               ),
             ),
-          const SizedBox(height: 32),
-          Text(
-            'تحديث سعر الصرف',
-            style: theme.textTheme.titleLarge,
           ),
-          const SizedBox(height: 16),
-          Form(
-            key: _formKey,
-            child: Row(
-              children: [
-                Expanded(
-                  child: TextFormField(
-                    controller: _rateController,
-                    decoration: const InputDecoration(
-                      labelText: 'سعر الصرف (USD إلى IQD)',
-                      hintText: 'مثال: 1500',
-                      border: OutlineInputBorder(),
-                      prefixText: '1 USD = ',
-                      suffixText: ' IQD',
+
+          const SizedBox(height: 32),
+
+          // Update Rate Form
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: AppTheme.warningOrange.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Icon(
+                          Icons.edit_outlined,
+                          color: AppTheme.warningOrange,
+                          size: 24,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Text(
+                        'تحديث سعر الصرف',
+                        style: theme.textTheme.titleLarge,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  Form(
+                    key: _formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'سعر الصرف (USD إلى IQD)',
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TextFormField(
+                                controller: _rateController,
+                                decoration: InputDecoration(
+                                  hintText: 'مثال: 1500',
+                                  filled: true,
+                                  fillColor: AppTheme.darkSurfaceVariant,
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                    borderSide: BorderSide.none,
+                                  ),
+                                  prefixText: '1 USD = ',
+                                  suffixText: ' IQD',
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 12,
+                                  ),
+                                ),
+                                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                validator: (value) {
+                                  if (value == null || value.trim().isEmpty) {
+                                    return 'يرجى إدخال سعر الصرف';
+                                  }
+                                  final rate = double.tryParse(value);
+                                  if (rate == null || rate <= 0) {
+                                    return 'يرجى إدخال رقم صحيح أكبر من الصفر';
+                                  }
+                                  return null;
+                                },
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            AppButton(
+                              label: _isLoading ? 'جاري الحفظ...' : 'حفظ',
+                              type: ButtonType.primary,
+                              icon: _isLoading ? null : Icons.save_outlined,
+                              isDisabled: _isLoading,
+                              onPressed: _isLoading ? null : _saveRate,
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'سيتم تطبيق سعر الصرف الجديد على جميع العمليات الحسابية',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: AppTheme.textSecondary,
+                          ),
+                        ),
+                      ],
                     ),
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                    validator: (value) {
-                      if (value == null || value.trim().isEmpty) {
-                        return 'يرجى إدخال سعر الصرف';
-                      }
-                      final rate = double.tryParse(value);
-                      if (rate == null || rate <= 0) {
-                        return 'يرجى إدخال رقم صحيح أكبر من الصفر';
-                      }
-                      return null;
-                    },
                   ),
-                ),
-                const SizedBox(width: 16),
-                ElevatedButton(
-                  onPressed: _isLoading ? null : _saveRate,
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-                  ),
-                  child: _isLoading
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Text('حفظ'),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ],

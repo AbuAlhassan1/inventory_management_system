@@ -10,6 +10,7 @@ import 'core/repositories/sale_item_repository.dart';
 import 'core/repositories/customer_repository.dart';
 import 'core/repositories/exchange_rate_repository.dart';
 import 'core/repositories/category_repository.dart';
+import 'core/theme/app_theme.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -72,18 +73,9 @@ class LIPSApp extends StatelessWidget {
           Locale('en', 'US'), // English (US) - Secondary
         ],
         locale: const Locale('ar', 'IQ'), // Default to Arabic RTL
-        theme: ThemeData(
-          useMaterial3: true,
-          fontFamily: GoogleFonts.cairo().fontFamily,
-          textTheme: GoogleFonts.cairoTextTheme(),
-        ),
-        darkTheme: ThemeData(
-          useMaterial3: true,
-          fontFamily: GoogleFonts.cairo().fontFamily,
-          textTheme: GoogleFonts.cairoTextTheme(ThemeData.dark().textTheme),
-          brightness: Brightness.dark,
-        ),
-        themeMode: ThemeMode.system,
+        theme: AppTheme.lightTheme,
+        darkTheme: AppTheme.darkTheme,
+        themeMode: ThemeMode.dark, // Force dark theme to match design
       ),
     );
   }
